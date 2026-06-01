@@ -1,0 +1,15 @@
+THE BUSY BEAN CAFE
+42 Pretend Street
+Date: 05/28/2026
+
+Cappuccino             4.25
+Avocado Toast          9.50
+2 x Croissant          6.00
+Orange Juice           3.75
+
+Subtotal              23.50
+Tax                    1.88
+Total                 25.38
+
+Card ************9999
+Have a lovely day!

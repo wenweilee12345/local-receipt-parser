@@ -1,0 +1,17 @@
+FIXIT HARDWARE SUPPLY
+9 Fictional Road, Testville
+June 1, 2026
+
+Hammer 16oz            12.99
+Wood Screws Box        5.49
+3 x Paint Brush        14.97
+Sandpaper Pack         4.25
+Wall Anchors           3.50
+Measuring Tape         8.99
+
+Subtotal              50.19
+GST                    2.51
+Total                 52.70
+
+DEBIT ************4242
+Returns within 30 days

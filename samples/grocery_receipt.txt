@@ -1,0 +1,18 @@
+FRESHMART GROCERS
+123 Imaginary Ave, Nowhere City
+Tel: 555-0100
+Date: 2026-06-01
+
+Bananas 1kg            1.29
+2 x Almond Milk        7.98
+Sourdough Loaf         4.50
+Cheddar Cheese         6.25
+Free Range Eggs        3.99
+Olive Oil 500ml        8.75
+
+Subtotal              32.76
+Sales Tax              2.62
+Total                 35.38
+
+VISA ************1234
+Thank you for shopping!
