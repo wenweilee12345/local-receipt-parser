@@ -3,8 +3,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import pytest  # noqa: E402
+
 from src.parser import parse_receipt  # noqa: E402
 from src.export import receipt_to_csv  # noqa: E402
+from src import ocr  # noqa: E402
 
 GROCERY = """FRESHMART GROCERS
 123 Imaginary Ave, Nowhere City
@@ -88,3 +91,38 @@ def test_empty_input_is_safe():
     r = parse_receipt("")
     assert r.items == []
     assert r.total is None
+
+
+# --- OCR backend abstraction (no API keys / Tesseract required) -------------
+
+def test_backend_registry_has_three_engines():
+    assert ocr.BACKENDS == ("tesseract", "openai", "google")
+    status = ocr.backend_status()
+    assert set(status) == set(ocr.BACKENDS)
+    for available, hint in status.values():
+        assert isinstance(available, bool)
+        assert isinstance(hint, str) and hint
+
+
+def test_unknown_backend_raises_clear_error():
+    with pytest.raises(ValueError, match="Unknown OCR backend"):
+        ocr.image_bytes_to_text(b"x", backend="not-a-backend")
+    with pytest.raises(ValueError, match="Unknown OCR backend"):
+        ocr.extract_text("a.png", b"x", backend="nope")
+
+
+def test_backend_dispatch_routes_to_selected_engine(monkeypatch):
+    calls = {}
+
+    def fake_image(data, backend="tesseract", lang="eng"):
+        calls["backend"] = backend
+        return "MOCKED"
+
+    monkeypatch.setattr(ocr, "image_bytes_to_text", fake_image)
+    assert ocr.extract_text("receipt.png", b"x", backend="openai") == "MOCKED"
+    assert calls["backend"] == "openai"
+
+
+def test_available_backends_subset_of_all():
+    avail = ocr.available_backends()
+    assert all(b in ocr.BACKENDS for b in avail)

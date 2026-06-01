@@ -1,0 +1,7 @@
+# Optional OCR backends. Install only the one(s) you want:
+#   pip install -r requirements-api.txt
+#
+# OpenAI Vision  -> set OPENAI_API_KEY (and optionally OPENAI_OCR_MODEL)
+openai>=1.30
+# Google Cloud Vision -> set GOOGLE_APPLICATION_CREDENTIALS to your key JSON
+google-cloud-vision>=3.7

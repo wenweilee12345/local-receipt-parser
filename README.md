@@ -3,13 +3,16 @@
 > Upload a receipt image or PDF, extract items, totals and taxes, and export a clean CSV — all locally, nothing leaves your machine.
 
 ![CI](https://img.shields.io/github/actions/workflow/status/wenweilee12345/local-receipt-parser/ci.yml?branch=main)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-ff4b4b)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Local Receipt Parser is a small **Streamlit** app that runs **Tesseract OCR**
-on a receipt, parses out the merchant, date, line items, subtotal, tax and
-total, lets you review them in a table, and exports the result to CSV.
+Local Receipt Parser is a small **Streamlit** app that runs OCR on a receipt,
+parses out the merchant, date, line items, subtotal, tax and total, lets you
+review them in a table, and exports the result to CSV. OCR runs through your
+choice of **Tesseract** (local/offline), the **OpenAI Vision API**, or the
+**Google Cloud Vision API**.
 
 It ships with **fully fictional sample receipts** so you can demo it safely
 without exposing any real personal or financial data.
@@ -19,8 +22,11 @@ without exposing any real personal or financial data.
 ## Features
 
 - 🧾 **Image & PDF input** — PNG/JPG/TIFF/BMP and PDF (text or scanned).
-- 🔍 **Local OCR** — Tesseract via `pytesseract`; images are processed in
-  memory and never uploaded anywhere.
+- 🔌 **Pluggable OCR** — pick **Tesseract** (local), **OpenAI Vision**, or
+  **Google Cloud Vision** from the sidebar; the app falls back gracefully when
+  a backend isn't configured.
+- 🔒 **Local-first** — Tesseract processes images in memory and uploads nothing.
+  API backends only send the image when you explicitly select them.
 - 📦 **Structured extraction** — merchant, date, per-line items with quantities,
   subtotal, tax, and total.
 - ✅ **Sanity check** — warns when line items don't sum to the printed subtotal.
@@ -58,6 +64,37 @@ sample under **Try a sample**, and click **Parse**.
 > The bundled samples ship with their ground-truth text, so **Try a sample**
 > still works even if Tesseract isn't installed yet — handy for a first look.
 
+## OCR backends
+
+Choose the engine in the sidebar. Tesseract works out of the box; the API
+backends are optional and only used when selected.
+
+| Backend | Install | Configure | Notes |
+|---------|---------|-----------|-------|
+| **Tesseract** | see table above | — | Local, offline, free, private. Default. |
+| **OpenAI Vision** | `pip install -r requirements-api.txt` | `OPENAI_API_KEY` (optional `OPENAI_OCR_MODEL`, default `gpt-4o-mini`) | Strong on photos/skewed receipts. Sends the image to OpenAI. |
+| **Google Cloud Vision** | `pip install -r requirements-api.txt` | `GOOGLE_APPLICATION_CREDENTIALS` → your service-account JSON | Excellent dense-text OCR. Sends the image to Google. |
+
+Set the variables before launching Streamlit, e.g. on Windows PowerShell:
+
+```powershell
+$env:OPENAI_API_KEY = "sk-..."
+streamlit run app.py
+```
+
+```bash
+# macOS/Linux
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+streamlit run app.py
+```
+
+Programmatic use:
+
+```python
+from src.ocr import extract_text
+text = extract_text("receipt.jpg", open("receipt.jpg", "rb").read(), backend="openai")
+```
+
 ## Usage
 
 ```text
@@ -89,8 +126,9 @@ total,,35.38
 ```
 local-receipt-parser/
 ├── app.py                  # Streamlit UI
+├── requirements-api.txt    # optional deps for OpenAI / Google backends
 ├── src/
-│   ├── ocr.py              # image / PDF -> text (Tesseract, PyMuPDF)
+│   ├── ocr.py              # image / PDF -> text (Tesseract / OpenAI / Google)
 │   ├── parser.py           # text -> structured Receipt (OCR-agnostic)
 │   └── export.py           # Receipt -> CSV
 ├── samples/

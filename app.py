@@ -14,9 +14,21 @@ import os
 import pandas as pd
 import streamlit as st
 
-from src.ocr import extract_text, tesseract_available, OCRUnavailable
+from src.ocr import (
+    extract_text,
+    tesseract_available,
+    backend_status,
+    BACKENDS,
+    OCRUnavailable,
+)
 from src.parser import parse_receipt
 from src.export import receipt_to_csv
+
+BACKEND_LABELS = {
+    "tesseract": "Tesseract (local, offline)",
+    "openai": "OpenAI Vision API",
+    "google": "Google Cloud Vision API",
+}
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
@@ -50,19 +62,33 @@ def sample_groundtruth(png_path: str) -> str | None:
 # --- Sidebar: status + options ---------------------------------------------
 
 with st.sidebar:
-    st.header("Status")
-    if tesseract_available():
-        st.success("Tesseract OCR detected.")
-    else:
-        st.warning(
-            "Tesseract not found. You can still try the bundled samples "
-            "(they ship with text), but uploads won't OCR until you "
-            "[install Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html)."
+    st.header("OCR engine")
+    status = backend_status()
+    backend = st.radio(
+        "Choose a backend",
+        options=list(BACKENDS),
+        format_func=lambda b: BACKEND_LABELS.get(b, b),
+    )
+    ok, hint = status[backend]
+    (st.success if ok else st.warning)(hint)
+
+    with st.expander("All backends"):
+        for name in BACKENDS:
+            avail, msg = status[name]
+            icon = "✅" if avail else "⚪"
+            st.markdown(f"{icon} **{BACKEND_LABELS[name]}** — {msg}")
+
+    if not tesseract_available():
+        st.caption(
+            "No engine? The bundled samples ship with text, so **Try a sample** "
+            "still works without any OCR backend installed."
         )
+
     st.divider()
     st.markdown(
-        "**Privacy:** images are processed in memory and never uploaded "
-        "anywhere. Sample receipts are entirely fictional."
+        "**Privacy:** local OCR processes images in memory and uploads nothing. "
+        "The API backends send the image to OpenAI / Google when selected. "
+        "Sample receipts are entirely fictional."
     )
 
 
@@ -83,10 +109,12 @@ with tab_sample:
         preview_path = samples[choice]
         source_label = choice
         if st.button("Parse sample", type="primary"):
-            if tesseract_available():
+            if status[backend][0]:
                 with open(preview_path, "rb") as fh:
                     try:
-                        text = extract_text(os.path.basename(preview_path), fh.read())
+                        text = extract_text(
+                            os.path.basename(preview_path), fh.read(), backend=backend
+                        )
                     except OCRUnavailable:
                         text = sample_groundtruth(preview_path)
             else:
@@ -102,7 +130,7 @@ with tab_upload:
         source_label = up.name
         if st.button("Parse upload", type="primary"):
             try:
-                text = extract_text(up.name, up.getvalue())
+                text = extract_text(up.name, up.getvalue(), backend=backend)
             except OCRUnavailable as exc:
                 st.error(str(exc))
 
